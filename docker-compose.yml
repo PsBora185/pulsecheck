@@ -1,0 +1,10 @@
+services:
+  devops-intro-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: devops-intro:local
+    container_name: devops-intro-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
