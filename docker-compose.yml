@@ -16,7 +16,7 @@ services:
       - "6379:6379"
 
   backend:
-    build: ./backend
+    image: ${BACKEND_IMAGE:-pulsecheck-backend:latest}
     ports:
       - "3000:3000"
     environment:
@@ -28,7 +28,7 @@ services:
       - redis
 
   frontend:
-    build: ./frontend
+    image: ${FRONTEND_IMAGE:-pulsecheck-frontend:latest}
     ports:
       - "8000:80"
     depends_on:
