@@ -19,7 +19,7 @@ pipeline {
                 docker ps
                 '''
             }
-        }     l̥
+        }
         stage('Code') {
             steps {
                 echo 'Fetching the code'
