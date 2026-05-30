@@ -92,11 +92,14 @@ app.get('/api/status', async (req, res) => {
 });
 
 app.post('/api/monitor', async (req, res) => {
-  const { url } = req.body;
+  const { url, interval } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   
-  await pingQueue.add('pingJob', { url }, { repeat: { every: 10000 } });
-  res.json({ message: `Now monitoring ${url}` });
+  // Calculate interval in ms (default to 10s if not provided)
+  const checkInterval = interval ? Math.max(parseInt(interval), 1) * 1000 : 10000;
+  
+  await pingQueue.add('pingJob', { url }, { repeat: { every: checkInterval } });
+  res.json({ message: `Target ${url} deployed (checking every ${checkInterval/1000}s)` });
 });
 
 // Initialization
