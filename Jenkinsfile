@@ -11,6 +11,15 @@ pipeline {
                 echo "Running on ${env.NODE_NAME}"
             }
         }
+        stage('Debug') {
+            steps {
+                sh '''
+                whoami
+                groups
+                docker ps
+                '''
+            }
+        }     l̥
         stage('Code') {
             steps {
                 echo 'Fetching the code'
