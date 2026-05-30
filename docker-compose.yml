@@ -1,7 +1,38 @@
 services:
-  devops-intro-app:
-    image: devops-intro:latest
-    container_name: devops-intro-app
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pulsecheck
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://postgres:password@db:5432/pulsecheck
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build: ./frontend
     ports:
       - "8000:80"
-    restart: unless-stopped
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

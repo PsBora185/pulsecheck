@@ -1,63 +1,34 @@
-# DevOps Intro Practice App
+# PulseCheck - Uptime Monitor
 
-Small frontend project for practicing CI/CD, Docker, Docker Compose, and Jenkins without heavy assets.
+PulseCheck is a lightweight uptime monitoring service built as a robust DevOps resume project. It simulates real-world distributed architectures while maintaining a minimal resource footprint making it perfect for cheap EC2/VPS deployments.
 
-## What this app includes
+## Architecture
 
-- Lightweight Vite + Vanilla JavaScript frontend
-- DevOps intro dashboard with tool cards and CI/CD flow
-- Dockerfile for production-style static hosting with nginx
-- docker-compose.yml for local container run
-- Jenkinsfile with starter pipeline stages: Checkout, Install, Build, Docker Build
+* **Frontend**: React Single Page Application served via NGINX (Multi-stage Docker build).
+* **Backend**: Node.js & Express REST API handling status checks.
+* **Worker System**: Periodical service pings via Redis + BullMQ, tracking response latencies.
+* **Persistence**: PostgreSQL Database tracking historical uptime events.
+* **Observability**: Exposes a `/metrics` Prometheus endpoint mapping Node.js telemetry and Redis cache performance.
+* **CI/CD**: Advanced `Jenkinsfile` for distributed building, testing, container creation, and deployment.
 
-## Local development
+## Running Locally
 
-```bash
-npm install
-npm run dev
-```
-
-Open the local URL shown by Vite (usually http://localhost:5173).
-
-## Build app
+Requires Docker and Docker Compose.
 
 ```bash
-npm run build
-npm run preview
+docker-compose up -d --build
 ```
+1. Frontend will be accessible on `http://localhost:8000`
+2. Backend API runs on `http://localhost:3000`
+3. Prometheus metrics exported at `http://localhost:3000/metrics`
 
-## Docker usage
+## Monitoring a Service
 
-Build image:
-
+To trigger the monitor to start pinging a URL every 10 seconds:
 ```bash
-docker build -t devops-intro:local .
+curl -X POST http://localhost:3000/api/monitor \
+     -H "Content-Type: application/json" \
+     -d '{"url":"https://google.com"}'
 ```
 
-Run container:
-
-```bash
-docker run --rm -p 8080:80 devops-intro:local
-```
-
-Open http://localhost:8080
-
-## Docker Compose usage
-
-```bash
-docker compose up --build
-```
-
-Stop compose:
-
-```bash
-docker compose down
-```
-
-## Jenkinsfile notes
-
-- `npm ci` installs dependencies
-- `npm run build` creates production assets
-- `docker build` creates container image
-
-When you are ready, you can add a deploy stage in Jenkins to run compose or push image to a registry.
+The React frontend will immediately begin reflecting the service's UP/DOWN lifecycle status.
