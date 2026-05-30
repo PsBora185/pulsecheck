@@ -101,7 +101,19 @@ app.post('/api/monitor', async (req, res) => {
 
 // Initialization
 async function init() {
-  const client = await pool.connect();
+  let client;
+  for (let i = 0; i < 5; i++) {
+    try {
+      client = await pool.connect();
+      console.log('Connected to PostgreSQL successfully');
+      break;
+    } catch(e) {
+      console.error(`PostgreSQL connection failed, retrying in 5 seconds... (${i+1}/5)`);
+      if (i === 4) throw e;
+      await new Promise(res => setTimeout(res, 5000));
+    }
+  }
+
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS pings (
@@ -112,6 +124,7 @@ async function init() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log('Database initialized');
   } catch(e) {
     console.error('Init DB Error:', e);
   } finally {
