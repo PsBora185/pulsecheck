@@ -51,9 +51,15 @@ pipeline {
                     export FRONTEND_IMAGE=${dockerHubUser}/pulsecheck-frontend:latest
                     export BACKEND_IMAGE=${dockerHubUser}/pulsecheck-backend:latest
                     
-                    docker compose down || true
-                    docker compose pull
-                    docker compose up -d --build --remove-orphans
+                    if docker compose version >/dev/null 2>&1; then
+                        DOCKER_COMPOSE="docker compose"
+                    else
+                        DOCKER_COMPOSE="docker-compose"
+                    fi
+                    
+                    \$DOCKER_COMPOSE down || true
+                    \$DOCKER_COMPOSE pull
+                    \$DOCKER_COMPOSE up -d --build --remove-orphans
                     docker image prune -f
                     """
                 }
