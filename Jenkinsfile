@@ -10,9 +10,7 @@ pipeline {
         
         stage('Test & Compile') {
             steps {
-                dir('backend') {
-                    sh 'mvn test -q'
-                }
+                sh 'docker run --rm -v "${WORKSPACE}/backend":/app -w /app maven:3.9-eclipse-temurin-17-alpine mvn test -q'
             }
         }
         
