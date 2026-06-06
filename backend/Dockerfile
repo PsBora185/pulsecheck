@@ -1,16 +1,10 @@
-FROM node:22-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
+FROM maven:3.9-eclipse-temurin-17-alpine AS build
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-FROM node:22-alpine
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/src ./src
-
-ENV NODE_ENV=production
+FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl
+COPY --from=build /target/*.jar app.jar
 EXPOSE 3000
-
-CMD ["npm", "start"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
