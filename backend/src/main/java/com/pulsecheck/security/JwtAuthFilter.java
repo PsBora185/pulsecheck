@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtConfig jwtConfig;
@@ -33,6 +35,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
+        String path = request.getRequestURI();
+        log.debug("Incoming request to path: {}", path);
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -42,6 +47,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             if (jwtConfig.validateToken(jwt)) {
                 userEmail = jwtConfig.extractEmail(jwt);
+                log.info("JWT validated successfully for email: {} on path: {}", userEmail, path);
                 if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -51,9 +57,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.debug("SecurityContext set for email: {}", userEmail);
                 }
+            } else {
+                log.warn("Invalid JWT token provided for path: {}", path);
             }
         } catch (Exception e) {
+            log.error("Error authenticating request on path: {} - error: {}", path, e.getMessage());
             // Keep security context clear on filter errors
         }
 

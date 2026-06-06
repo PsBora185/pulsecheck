@@ -7,6 +7,7 @@ import com.pulsecheck.model.Ping;
 import com.pulsecheck.repository.PingRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PingService {
 
     private final PingRepository pingRepository;
@@ -27,6 +29,7 @@ public class PingService {
     private static final String LATEST_STATUS_KEY = "latest_status";
 
     public void ping(Monitor monitor) {
+        log.debug("Executing ping for monitor: {} ({})", monitor.getName(), monitor.getUrl());
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10000);
         factory.setReadTimeout(10000);
@@ -51,6 +54,7 @@ public class PingService {
             }
         } catch (RestClientException e) {
             responseTimeMs = System.currentTimeMillis() - start;
+            log.warn("Connection failure for {}: {}", monitor.getUrl(), e.getMessage());
             if (e.getMessage() != null) {
                 if (e.getMessage().contains("timed out")) {
                     failureReason = "TIMEOUT";
@@ -70,6 +74,9 @@ public class PingService {
 
         if (!"UP".equals(status)) {
             responseTimeMs = null;
+            log.warn("Monitor {} is DOWN. Reason: {}", monitor.getUrl(), failureReason);
+        } else {
+            log.info("Monitor {} is UP. Response time: {}ms", monitor.getUrl(), responseTimeMs);
         }
 
         // Save to DB
@@ -78,7 +85,8 @@ public class PingService {
         ping.setStatus(status);
         ping.setResponseTimeMs(responseTimeMs);
         ping.setFailureReason(failureReason);
-        pingRepository.save(ping);
+        ping = pingRepository.save(ping);
+        log.debug("Saved ping result to database, ID: {}", ping.getId());
 
         // Update Redis
         try {
@@ -87,8 +95,9 @@ public class PingService {
             );
             String json = objectMapper.writeValueAsString(statusResponse);
             redisTemplate.opsForHash().put(LATEST_STATUS_KEY, monitor.getUrl(), json);
+            log.debug("Updated Redis status cache for {}", monitor.getUrl());
         } catch (Exception e) {
-            // Ignore JSON serialization errors
+            log.error("Failed to update Redis cache for monitor {}: {}", monitor.getUrl(), e.getMessage());
         }
 
         // Increment Micrometer counter

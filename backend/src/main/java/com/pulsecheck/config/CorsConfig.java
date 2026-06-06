@@ -18,7 +18,11 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         List<String> origins = new ArrayList<>();
         origins.add("http://localhost:5173");
+        origins.add("http://127.0.0.1:5173");
+        origins.add("http://localhost:3005");
+        origins.add("http://127.0.0.1:3005");
         origins.add("http://localhost:8000");
+        origins.add("http://127.0.0.1:8000");
         if (frontendUrl != null && !frontendUrl.isBlank()) {
             origins.add(frontendUrl);
         }

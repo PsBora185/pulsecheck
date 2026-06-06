@@ -1,0 +1,1 @@
+ALTER TABLE pings ALTER COLUMN response_time_ms TYPE BIGINT;
