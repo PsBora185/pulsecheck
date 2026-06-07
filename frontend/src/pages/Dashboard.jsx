@@ -179,7 +179,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 duration-200">
           <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Monitored</h3>
-          <p className="text-3xl font-black text-slate-800">{status.length}</p>
+          <p className="text-3xl font-black text-slate-800">
+            {status.length} <span className="text-xs font-semibold text-slate-400">/ 10 max</span>
+          </p>
         </div>
         <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 duration-200 border-l-4 border-emerald-500">
           <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 text-emerald-600">Online Services</h3>
@@ -208,12 +210,12 @@ export default function Dashboard() {
             <div
               key={s.id}
               onClick={() => navigate(`/monitor/${s.id}`)}
-              className={`bg-white border border-slate-200 rounded-xl p-5 hover:border-sky-500 hover:shadow-md cursor-pointer transition-all duration-300 border-t-4 hover:scale-[1.01] ${
+              className={`bg-white border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all duration-300 hover:scale-[1.005] ${
                 !s.isActive 
-                  ? 'border-t-slate-400 opacity-70 bg-slate-50/50' 
+                  ? 'border-slate-200/60 opacity-70 bg-slate-50/50 hover:shadow-slate-500/5' 
                   : s.isUp 
-                    ? 'border-t-emerald-500' 
-                    : 'border-t-rose-500'
+                    ? 'border-slate-200/80 hover:border-emerald-500/40 hover:shadow-emerald-500/5' 
+                    : 'border-slate-200/80 hover:border-rose-500/40 hover:shadow-rose-500/5'
               }`}
             >
               <div className="flex justify-between items-start gap-4 mb-4">
@@ -223,17 +225,21 @@ export default function Dashboard() {
                   </h3>
                   <p className="text-slate-400 text-xs truncate mt-0.5">{s.url}</p>
                 </div>
-                <span
-                  className={`text-2xs font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                    !s.isActive
-                      ? 'bg-slate-100 text-slate-500 border border-slate-200'
-                      : s.isUp
-                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                        : 'bg-rose-50 text-rose-600 border border-rose-100'
-                  }`}
-                >
-                  {!s.isActive ? 'PAUSED' : s.isUp ? 'ONLINE' : 'OFFLINE'}
-                </span>
+                <div className="flex items-center gap-2 border border-slate-100 px-2.5 py-1 rounded-full bg-slate-50/50 shadow-xs shrink-0 self-start">
+                  <span className={`relative flex h-2 w-2 ${!s.isActive ? '' : 'animate-pulse'}`}>
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                      !s.isActive ? 'bg-slate-400' : s.isUp ? 'bg-emerald-400' : 'bg-rose-400'
+                    }`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                      !s.isActive ? 'bg-slate-500' : s.isUp ? 'bg-emerald-500' : 'bg-rose-500'
+                    }`}></span>
+                  </span>
+                  <span className={`text-3xs font-extrabold tracking-wider ${
+                    !s.isActive ? 'text-slate-500' : s.isUp ? 'text-emerald-600' : 'text-rose-600'
+                  }`}>
+                    {!s.isActive ? 'PAUSED' : s.isUp ? 'ONLINE' : 'OFFLINE'}
+                  </span>
+                </div>
               </div>
 
               <div className="flex justify-between items-end border-t border-slate-100 pt-4 mt-2">
@@ -327,6 +333,12 @@ export default function Dashboard() {
             <h3 className="text-xl font-bold text-slate-950 mb-1">Deploy New Monitor</h3>
             <p className="text-slate-500 text-xs mb-6">Specify target configurations for active pings</p>
 
+            {status.length >= 10 && (
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs rounded-lg p-3.5 mb-6 font-medium">
+                ⚠️ **Limit Reached**: You are monitoring the maximum allowed 10 endpoints. Please delete an existing monitor before deploying a new target.
+              </div>
+            )}
+
             {error && (
               <div className="bg-rose-500/10 border border-rose-500/30 text-rose-600 text-sm rounded-lg p-3 mb-4 font-medium">
                 ⚠️ {error}
@@ -340,8 +352,9 @@ export default function Dashboard() {
                 </label>
                 <input
                   type="text"
+                  disabled={status.length >= 10}
                   placeholder="e.g. Stripe API Gateway"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-colors disabled:opacity-50"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                 />
@@ -354,8 +367,9 @@ export default function Dashboard() {
                 <input
                   type="url"
                   required
+                  disabled={status.length >= 10}
                   placeholder="https://api.stripe.com/health"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-colors disabled:opacity-50"
                   value={newUrl}
                   onChange={(e) => setNewUrl(e.target.value)}
                 />
@@ -369,7 +383,8 @@ export default function Dashboard() {
                   type="number"
                   required
                   min="1"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
+                  disabled={status.length >= 10}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-colors disabled:opacity-50"
                   value={interval}
                   onChange={(e) => setIntervalVal(Number(e.target.value))}
                 />
@@ -385,7 +400,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || status.length >= 10}
                   className="bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Deploying...' : 'Deploy Target'}

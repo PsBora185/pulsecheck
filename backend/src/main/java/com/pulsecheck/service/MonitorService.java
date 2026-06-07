@@ -33,6 +33,10 @@ public class MonitorService {
 
     @CacheEvict(value = "active_monitors", key = "#userId")
     public MonitorResponse saveMonitor(MonitorRequest req, Long userId) {
+        if (monitorRepository.findByUserId(userId).size() >= 10) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Limit of 10 monitors reached. Please delete an existing monitor to deploy a new one.");
+        }
+
         if (monitorRepository.findByUrl(req.url()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "URL already exists");
         }

@@ -10,7 +10,7 @@ public class SchedulerConfig {
     @Bean
     public ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(5);
+        scheduler.setPoolSize(15);
         scheduler.setThreadNamePrefix("ping-scheduler-");
         return scheduler;
     }

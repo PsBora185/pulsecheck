@@ -93,15 +93,21 @@ export default function MonitorDetail() {
             <p className="text-slate-400 text-sm mt-1 select-all">{monitor.url}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span
-              className={`text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider ${
-                monitor.isUp
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                  : 'bg-rose-50 text-rose-600 border border-rose-100'
-              }`}
-            >
-              {monitor.isUp ? 'ONLINE' : 'OFFLINE'}
-            </span>
+            <div className="flex items-center gap-2 border border-slate-100 px-3 py-1.5 rounded-full bg-slate-50/50 shadow-xs shrink-0">
+              <span className="relative flex h-2.5 w-2.5 animate-pulse">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  monitor.isUp ? 'bg-emerald-400' : 'bg-rose-400'
+                }`}></span>
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                  monitor.isUp ? 'bg-emerald-500' : 'bg-rose-500'
+                }`}></span>
+              </span>
+              <span className={`text-2xs font-extrabold tracking-wider ${
+                monitor.isUp ? 'text-emerald-600' : 'text-rose-600'
+              }`}>
+                {monitor.isUp ? 'ONLINE' : 'OFFLINE'}
+              </span>
+            </div>
             <div className="text-right">
               <p className="text-2xs text-slate-400 font-bold uppercase tracking-wider">Uptime ({range})</p>
               <p className="text-lg font-black text-slate-800">{uptimePercentage}%</p>
