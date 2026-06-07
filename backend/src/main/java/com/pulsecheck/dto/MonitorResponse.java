@@ -8,6 +8,8 @@ public record MonitorResponse(
     String name,
     @JsonProperty("isUp") boolean isUp,
     Long latency,
-    Long ts
+    Long ts,
+    @JsonProperty("isActive") boolean isActive,
+    Integer interval
 ) {}
 

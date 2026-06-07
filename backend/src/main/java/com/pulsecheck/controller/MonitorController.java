@@ -64,13 +64,32 @@ public class MonitorController {
         return monitorService.getMonitorIncidents(id, userDetails.getId());
     }
 
+    @PutMapping("/monitor/{id}")
+    public MonitorResponse updateMonitor(
+            @PathVariable Long id,
+            @Valid @RequestBody MonitorRequest request,
+            org.springframework.security.core.Authentication authentication) {
+        com.pulsecheck.security.CustomUserDetails userDetails = (com.pulsecheck.security.CustomUserDetails) authentication.getPrincipal();
+        log.info("REST request to update monitor ID: {} for user: {}", id, userDetails.getUsername());
+        return monitorService.updateMonitor(id, request, userDetails.getId());
+    }
+
+    @PatchMapping("/monitor/{id}/toggle")
+    public void toggleMonitor(
+            @PathVariable Long id,
+            org.springframework.security.core.Authentication authentication) {
+        com.pulsecheck.security.CustomUserDetails userDetails = (com.pulsecheck.security.CustomUserDetails) authentication.getPrincipal();
+        log.info("REST request to toggle monitor ID: {} for user: {}", id, userDetails.getUsername());
+        monitorService.toggleMonitor(id, userDetails.getId());
+    }
+
     @DeleteMapping("/monitor/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteMonitor(
             @PathVariable Long id,
             org.springframework.security.core.Authentication authentication) {
         com.pulsecheck.security.CustomUserDetails userDetails = (com.pulsecheck.security.CustomUserDetails) authentication.getPrincipal();
-        log.info("REST request to delete monitor ID: {} for user: {}", id, userDetails.getUsername());
-        monitorService.deactivateMonitor(id, userDetails.getId());
+        log.info("REST request to completely delete monitor ID: {} for user: {}", id, userDetails.getUsername());
+        monitorService.deleteMonitor(id, userDetails.getId());
     }
 }

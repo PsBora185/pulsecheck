@@ -40,8 +40,8 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 font-sans">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 font-sans animate-fade-in">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl animate-scale-up">
         <div className="text-center mb-8">
           <span className="text-4xl">🚀</span>
           <h2 className="text-2xl font-extrabold text-white mt-4">Create Account</h2>

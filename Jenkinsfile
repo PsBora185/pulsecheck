@@ -53,7 +53,7 @@ pipeline {
                     \$DOCKER_COMPOSE down || true
                     \$DOCKER_COMPOSE pull
                     \$DOCKER_COMPOSE up -d --build --remove-orphans
-                    docker image prune -f
+                    docker image prune -af
                     """
                 }
             }
@@ -61,6 +61,10 @@ pipeline {
     }
     
     post {
+        always {
+            // Clean up unused docker builder cache and images on the runner host
+            sh "docker image prune -f"
+        }
         failure {
             echo "Pipeline failed at stage: ${env.STAGE_NAME}"
         }

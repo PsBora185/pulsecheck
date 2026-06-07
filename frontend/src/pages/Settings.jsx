@@ -93,7 +93,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto font-sans space-y-8">
+    <div className="p-6 md:p-8 max-w-4xl mx-auto font-sans space-y-8 animate-fade-in">
       <div>
         <h1 className="text-3xl font-extrabold text-slate-950 tracking-tight">Settings</h1>
         <p className="text-slate-500 text-sm mt-1">Manage your profile, password, and security preferences</p>

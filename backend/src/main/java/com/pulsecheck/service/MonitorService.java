@@ -45,11 +45,15 @@ public class MonitorService {
         }
 
         // Try to parse name from host
-        try {
-            URI uri = URI.create(req.url());
-            monitor.setName(uri.getHost() != null ? uri.getHost() : req.url());
-        } catch (Exception e) {
-            monitor.setName(req.url());
+        if (req.name() != null && !req.name().isBlank()) {
+            monitor.setName(req.name());
+        } else {
+            try {
+                URI uri = URI.create(req.url());
+                monitor.setName(uri.getHost() != null ? uri.getHost() : req.url());
+            } catch (Exception e) {
+                monitor.setName(req.url());
+            }
         }
 
         User user = userRepository.findById(userId)
@@ -60,7 +64,7 @@ public class MonitorService {
 
         return new MonitorResponse(
             monitor.getId(), monitor.getUrl(), monitor.getName(),
-            false, null, null
+            false, null, null, monitor.getIsActive(), monitor.getIntervalSeconds()
         );
     }
 
@@ -84,7 +88,9 @@ public class MonitorService {
                 monitor.getName(),
                 isUp,
                 latency,
-                ts
+                ts,
+                monitor.getIsActive(),
+                monitor.getIntervalSeconds()
             );
         }).collect(Collectors.toList());
     }
@@ -102,7 +108,8 @@ public class MonitorService {
     }
 
     @CacheEvict(value = "active_monitors", key = "#userId")
-    public void deactivateMonitor(Long id, Long userId) {
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteMonitor(Long id, Long userId) {
         Monitor monitor = monitorRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Monitor not found"));
 
@@ -110,7 +117,82 @@ public class MonitorService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
-        monitor.setIsActive(false);
+        // Delete all associated pings first to avoid foreign key violation
+        pingRepository.deleteByMonitorId(id);
+
+        // Delete monitor
+        monitorRepository.delete(monitor);
+
+        // Remove from Redis status cache
+        try {
+            redisTemplate.opsForHash().delete(LATEST_STATUS_KEY, monitor.getUrl());
+        } catch (Exception e) {
+            // Ignore Redis errors
+        }
+    }
+
+    @CacheEvict(value = "active_monitors", key = "#userId")
+    public MonitorResponse updateMonitor(Long id, MonitorRequest req, Long userId) {
+        Monitor monitor = monitorRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Monitor not found"));
+
+        if (!monitor.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        // Check if URL is changed and already exists in other monitors
+        if (!monitor.getUrl().equals(req.url())) {
+            java.util.Optional<Monitor> existing = monitorRepository.findByUrl(req.url());
+            if (existing.isPresent() && !existing.get().getId().equals(id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "URL already exists");
+            }
+        }
+
+        monitor.setUrl(req.url());
+        if (req.name() != null && !req.name().isBlank()) {
+            monitor.setName(req.name());
+        } else {
+            try {
+                URI uri = URI.create(req.url());
+                monitor.setName(uri.getHost() != null ? uri.getHost() : req.url());
+            } catch (Exception e) {
+                monitor.setName(req.url());
+            }
+        }
+
+        if (req.interval() != null) {
+            monitor.setIntervalSeconds(req.interval());
+        }
+
+        monitor = monitorRepository.save(monitor);
+
+        StatusResponse status = getStatus(monitor.getUrl());
+        boolean isUp = status != null && "UP".equals(status.status());
+        Long latency = status != null ? status.responseTimeMs() : null;
+        Long ts = status != null ? status.checkedAt() : System.currentTimeMillis();
+
+        return new MonitorResponse(
+            monitor.getId(),
+            monitor.getUrl(),
+            monitor.getName(),
+            isUp,
+            latency,
+            ts,
+            monitor.getIsActive(),
+            monitor.getIntervalSeconds()
+        );
+    }
+
+    @CacheEvict(value = "active_monitors", key = "#userId")
+    public void toggleMonitor(Long id, Long userId) {
+        Monitor monitor = monitorRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Monitor not found"));
+
+        if (!monitor.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        monitor.setIsActive(!monitor.getIsActive());
         monitorRepository.save(monitor);
     }
 

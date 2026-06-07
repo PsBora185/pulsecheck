@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record MonitorRequest(
     @NotBlank(message = "URL is required") String url,
+    String name,
     Integer interval
 ) {}
 

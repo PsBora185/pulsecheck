@@ -78,7 +78,7 @@ export default function MonitorDetail() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto font-sans">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto font-sans animate-fade-in">
       <button
         onClick={() => navigate('/')}
         className="text-slate-500 hover:text-slate-700 font-medium inline-flex items-center gap-2 mb-6 transition-colors text-sm"
