@@ -2,18 +2,6 @@ pipeline {
     agent any
     
     stages {
-        stage('IP Command Test') {
-            steps {
-                script {
-                    def PUBLIC_IP = sh(
-                        script: 'curl -s ifconfig.me',
-                        returnStdout: true
-                    ).trim()
-                    echo "Public IP: ${PUBLIC_IP}"
-                }
-            }
-        }
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -81,18 +69,22 @@ pipeline {
             emailext(
                 subject: "Build Failed",
                 body: "Please check Jenkins.",
-                to: "abc@example.com"
+                to: "pranavsinghbora@example.com"
             )
         }
         success { 
-            echo "Deployed successfully live on EC2!"
-            emailext(
-                subject: "Build Success",
-                body: '''Build completed successfully.
-                         Pulsecheck is live
-                ''',
-                to: "pranavsinghbora@gmail.com"
-            )
+            script {
+                def PUBLIC_IP = sh(
+                    script: 'curl -s ifconfig.me',
+                    returnStdout: true
+                ).trim()
+                echo "Deployed successfully live on EC2!"
+                emailext(
+                    subject: "Build Success",
+                    body: "Build completed successfully.\nPulsecheck is live on http://${PUBLIC_IP}:8000",
+                    to: "pranavsinghbora@gmail.com"
+                )
+            }
         }
     }
 }
